@@ -35,7 +35,7 @@ gmaps <- GoogleMaps(API_KEY);
 
 ## Agent Class Methods
 
-### getLocation(*callback*)
+### getGeolocation(*callback*)
 
 This will request a wifi scan from the device by issuing a `device.send()` command. The device will respond with the wifi networks it can see and send them to the Google Maps geolocation API. This API will try to return a geolocation based on the wifi signals it can see. The results will be passed to the *callback* function. The *callback* function takes two parameters: error, if an error occured while processing the request otherwise null, and a results table with the response from the Google API. The results table will contain the following fields:
 
@@ -46,7 +46,7 @@ This will request a wifi scan from the device by issuing a `device.send()` comma
 
 #### Example:
 ```
-gmaps.getLocation(function(error, resp) {
+gmaps.getGeolocation(function(error, resp) {
    if (error != null) {
         server.error(error);
    } else {
@@ -74,7 +74,7 @@ This method takes two required parameters: a *location* table with keys `lat` an
 
 #### Example:
 ```
-gmaps.getLocation(function(error, resp) {
+gmaps.getGeolocation(function(error, resp) {
    if (error != null) {
         server.error(error);
    } else {

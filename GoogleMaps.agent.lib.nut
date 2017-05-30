@@ -55,7 +55,7 @@ class GoogleMaps {
         imp.sleep(START_UP_DELAY);
     }
 
-    function getLocation(cb) {
+    function getGeolocation(cb) {
         _locationCB = cb;
 
         if (device.isconnected()) {
