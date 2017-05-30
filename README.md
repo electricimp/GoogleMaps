@@ -1,6 +1,6 @@
 # GoogleMaps
 
-The Google Maps library uses the Goolge Maps API to get location and time zone information.
+The Google Maps library uses the Goolge Maps API to get geolocation and time zone information.
 
 Please note to use this library you must require and instantiate Google Maps on both the agent and the device.
 
@@ -10,13 +10,15 @@ See [Google's API documentation](https://developers.google.com/maps/web-services
 
 ## Device Class Usage
 
-### Constructor: GoogleMaps()
-
-The device-side library takes no parameters.  It opens a listener for location requests from the agent. When a request is received, the device scans the WiFi networks and sends the result back to the agent. The constructor is called automatically, so to use you only need to require the library
+The constructor is called automatically whe you require the library.
 
 ```
 #require "GoogleMaps.device.lib.nut:1.0.0"
 ```
+
+### Constructor: GoogleMaps()
+
+The device-side library constructor takes no parameters.  It opens a listener for location requests from the agent. When a request is received, the device scans the WiFi networks and sends the result back to the agent. The constructor is called automatically whe you require the library.
 
 ## Agent Class Usage
 
@@ -42,6 +44,7 @@ This will request a wifi scan from the device by issuing a `device.send()` comma
 | location     | A table with keys `lat` and `lng`                          |
 | accuracy     | The accuracy radius of the estimated location, in meters   |
 
+#### Example:
 ```
 gmaps.getLocation(function(error, resp) {
    if (error != null) {
@@ -69,6 +72,7 @@ This method takes two required parameters: a *location* table with keys `lat` an
 | date         |  Squirrel date() object                                                   |
 | dateStr      | Date string formatted as YYYY-MM-DD HH-MM-SS                              |
 
+#### Example:
 ```
 gmaps.getLocation(function(error, resp) {
    if (error != null) {
