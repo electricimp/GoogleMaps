@@ -26,6 +26,9 @@ class GoogleMaps {
 
     static VERSION = "1.0.0";
 
+    static SCAN_REQUEST = "google.maps.scan";
+    static WIFI_NETWORKS_RESPONSE = "google.maps.wifi.networks";
+
     static LOCATION_URL = "https://www.googleapis.com/geolocation/v1/geolocate?key=";
     static TIMEZONE_URL = "https://maps.googleapis.com/maps/api/timezone/json?location=%f,%f&timestamp=%d";
 
@@ -45,7 +48,7 @@ class GoogleMaps {
 
     constructor(apiKey) {
         _apiKey = apiKey;
-        device.on("wifi.networks", _getLocation.bindenv(this));
+        device.on(WIFI_NETWORKS_RESPONSE, _getLocation.bindenv(this));
 
         // Ugly hack to make sure the partner has registered
         // handler before location request is processed
@@ -56,7 +59,7 @@ class GoogleMaps {
         _locationCB = cb;
 
         if (device.isconnected()) {
-            device.send("scan", null);
+            device.send(SCAN_REQUEST, null);
             _scanTimer = imp.wakeup(WIFI_SCAN_TIMEOUT, function() {
                 _locationCB(TIMEOUT_ERROR, null);
             }.bindenv(this))

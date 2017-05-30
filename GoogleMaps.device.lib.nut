@@ -22,6 +22,18 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-agent.on("scan", function(d) {
-    agent.send("wifi.networks", imp.scanwifinetworks())
-});
+class GoogleMaps {
+
+    static VERSION = "1.0.0";
+
+    static SCAN_REQUEST = "google.maps.scan";
+    static WIFI_NETWORKS_RESPONSE = "google.maps.wifi.networks";
+
+    constructor() {
+        agent.on(SCAN_REQUEST, function(d) {
+            agent.send(WIFI_NETWORKS_RESPONSE, imp.scanwifinetworks())
+        });
+    }
+}
+
+GoogleMaps();
