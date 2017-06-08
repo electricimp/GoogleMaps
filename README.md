@@ -8,6 +8,8 @@ Please note to use this library you must require and instantiate Google Maps on 
 
 See [Google's API documentation](https://developers.google.com/maps/web-services/) for further information.
 
+[![Build Status](https://travis-ci.org/electricimp/GoogleMaps.svg?branch=master)](https://travis-ci.org/electricimp/GoogleMaps)
+
 ## Device Class Usage
 
 To use just add this statement to the top of your device code. The constructor is called automatically when you require the library. 

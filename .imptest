@@ -1,0 +1,14 @@
+{
+    "modelId": "qryDFGlK1tUd" /* Test Group B */,
+    "devices": [
+        "233d4b6938a609ee" /* H - Imp001 (233d4b6938a609ee) */
+    ],
+    "agentFile": "GoogleMaps.agent.lib.nut",
+    "deviceFile": "GoogleMaps.device.lib.nut",
+    "stopOnFailure": false,
+    "timeout": 30,
+    "tests": [
+        "*.test.nut",
+        "tests/**/*.test.nut"
+    ]
+}
