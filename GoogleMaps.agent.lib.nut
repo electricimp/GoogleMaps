@@ -30,21 +30,25 @@ class GoogleMaps {
     static WIFI_NETWORKS_RESPONSE = "google.maps.wifi.networks";
 
     static LOCATION_URL = "https://www.googleapis.com/geolocation/v1/geolocate?key=";
-    static TIMEZONE_URL = "https://maps.googleapis.com/maps/api/timezone/json?location=%f,%f&timestamp=%d";
+    static TIMEZONE_URL = "https://maps.googleapis.com/maps/api/timezone/json?";
 
     static TIMEOUT_ERROR = "Timeout waiting for wifi scan";
-    static DEVICE_NOT_CONNECTED = "Device not connected";
     static WIFI_SIGNALS_ERROR = "Insufficient wifi signals found";
+    static MISSING_REQ_PARAMS_ERROR = "Location table must have keys: 'lat' and 'lng'";
+    static REQUEST_IN_PROGRESS = "Request already in progress";
     static GOOGLE_REQ_ERROR = "Unexpected response from Google";
+    static GOOGLE_REQ_LIMIT_EXCEEDED_ERROR  = "You have exceeded your daily limit";
+    static GOOGLE_REQ_INVALID_KEY_ERROR  = "Your Google Maps Geolocation API key is not valid or the request body is not valid JSON";
+    static GOOGLE_REQ_LOCATION_NOT_FOUND_ERROR  = "Your API request was valid, but no results were returned";
 
-    static WIFI_SCAN_TIMEOUT = 30;
+    static WIFI_SCAN_TIMEOUT_SEC = 30;
     static START_UP_DELAY = 0.5;
 
     _apiKey = null;
     _locationCB = null;
     _timezoneCB = null;
     _wifis = null;
-    _scanTimer - null;
+    _scanTimer = null;
 
     constructor(apiKey) {
         _apiKey = apiKey;
@@ -56,84 +60,136 @@ class GoogleMaps {
     }
 
     function getGeolocation(cb) {
+        // Only process one request at a time
+        if (_locationCB != null) {
+            cb(REQUEST_IN_PROGRESS, null);
+            return;
+        }
+        
         _locationCB = cb;
 
-        if (device.isconnected()) {
-            device.send(SCAN_REQUEST, null);
-            _scanTimer = imp.wakeup(WIFI_SCAN_TIMEOUT, function() {
-                _locationCB(TIMEOUT_ERROR, null);
-            }.bindenv(this))
-        } else {
-            _locationCB(DEVICE_NOT_CONNECTED, null);
-        }
+        device.send(SCAN_REQUEST, null);
+        
+        // Return a timeout error if we do not hear from the device
+        _scanTimer = imp.wakeup(WIFI_SCAN_TIMEOUT_SEC, function() {
+            _locationCB(TIMEOUT_ERROR, null);
+            _locationCB = null;
+        }.bindenv(this));
     }
 
     function getTimezone(location, cb) {
-        assert("lat" in location && "lng" in location);
+        if (_timezoneCB != null) {
+            // Only process one request at a time
+            cb(REQUEST_IN_PROGRESS, null);
+            return;
+        } else if (!("lat" in location && "lng" in location)) {
+            // Make sure we have the parameters we need to make request
+            cb(MISSING_REQ_PARAMS_ERROR, null);
+        }
+        
         _timezoneCB = cb;
-
-        local url = format("%s%s", TIMEZONE_URL, _apiKey);
+        local url = format("%slocation=%f,%f&timestamp=%d&key=%s", TIMEZONE_URL, location.lat, location.lng, time(), _apiKey);
         local req = http.get(url, {})
         req.sendasync(_timezoneResHandler.bindenv(this));
     }
 
     function _timezoneResHandler(res) {
         local body;
+        local err = null;
 
         try {
             body = http.jsondecode(res.body);
         } catch(e) {
-            _timezoneCB(e, res);
-            return;
+            imp.wakeup(0, function() {
+                _timezoneCB(e, res);
+                _timezoneCB = null;
+            }.bindenv(this))
         }
 
-        if ("status" in body && body.status == "OK") {
-            // Success
-            local t = time() + body.rawOffset + body.dstOffset;
-            local d = date(t);
-            body.time <- t;
-            body.date <- d;
-            body.dateStr <- format("%04d-%02d-%02d %02d:%02d:%02d", d.year, d.month+1, d.day, d.hour, d.min, d.sec)
-            body.gmtOffset <- body.rawOffset + body.dstOffset;
-            body.gmtOffsetStr <- format("GMT%s%d", body.gmtOffset < 0 ? "-" : "+", math.abs(body.gmtOffset / 3600));
-
-            _timezoneCB(null, body);
+        if ("status" in body) {
+            if (body.status == "OK") {
+                // Success
+                local t = time() + body.rawOffset + body.dstOffset;
+                local d = date(t);
+                body.time <- t;
+                body.date <- d;
+                body.dateStr <- format("%04d-%02d-%02d %02d:%02d:%02d", d.year, d.month+1, d.day, d.hour, d.min, d.sec)
+                body.gmtOffset <- body.rawOffset + body.dstOffset;
+                body.gmtOffsetStr <- format("GMT%s%d", body.gmtOffset < 0 ? "-" : "+", math.abs(body.gmtOffset / 3600));
+    
+                res = body;
+            } else {
+                if ("errorMessage" in body) {
+                    err = body.status + ": " + body.errorMessage;
+                } else {
+                    err = body.status;
+                }
+            }
         } else {
-            _timezoneCB(GOOGLE_REQ_ERROR, res);
+            err = res.statuscode + ": " + GOOGLE_REQ_ERROR;
         }
-
+        
+        // Pass err/response to callback
+        imp.wakeup(0, function() {
+            _timezoneCB(err, res);
+            _timezoneCB = null;
+        }.bindenv(this));
     }
 
     // Process location HTTP response
     function _locationRespHandler(res) {
-        local body;
-        local statuscode = res.statuscode;
+        local body; 
+        local err = null;
 
         try {
             body = http.jsondecode(res.body);
         } catch(e) {
-            _locationCB(e, res);
-            _wifis = null;
-            return;
+            imp.wakeup(0, function() {
+                _locationCB(e, res);
+                _locationCB = null;
+                _wifis = null;   
+            }.bindenv(this))
         }
-
-        if (statuscode == 200 && "location" in body) {
-            _locationCB(null, body.location);
-            _wifis = null;
-        } else if (statuscode == 429) {
-            // Too many requests try again in a second
-            imp.wakeup(1, function() {
-                _getLocation(_wifis);
-            }.bindenv(this));
-        } else if ("message" in body) {
-            // Return Google's error message
-            _locationCB(body.message, res);
-            _wifis = null;
-        } else {
-            // Pass generic error and response so user can handle error
-            _locationCB(GOOGLE_REQ_ERROR, res);
-            _wifis = null;
+        
+        local statuscode = res.statuscode;
+        switch(statuscode) {
+            case 200:
+                if ("location" in body) {
+                    res = body;
+                } else {
+                    err = GOOGLE_REQ_LOCATION_NOT_FOUND_ERROR;
+                }
+                break;
+            case 400:
+                err = GOOGLE_REQ_INVALID_KEY_ERROR;
+                break;
+            case 403:
+                err = GOOGLE_REQ_LIMIT_EXCEEDED_ERROR;
+                break;
+            case 404:
+                err = GOOGLE_REQ_LOCATION_NOT_FOUND_ERROR;
+                break;
+            case 429:
+                // Too many requests try again in a second
+                imp.wakeup(1, function() {
+                    _getLocation(_wifis);
+                }.bindenv(this));
+                return;
+            default:
+                if ("message" in body) {
+                    // Return Google's error message
+                    err = body.message;
+                } else {
+                    // Pass generic error and response so user can handle error
+                    err = GOOGLE_REQ_ERROR;
+                }
         }
+        
+        imp.wakeup(0, function() {
+            _locationCB(err, res);
+            _locationCB = null;
+            _wifis = null;   
+        }.bindenv(this));
     }
 
     // Handle Wifi scan from device
@@ -144,8 +200,11 @@ class GoogleMaps {
         }
 
         if (wifis.len() < 2) {
-            _locationCB(WIFI_SIGNALS_ERROR, null);
-            return
+            imp.wakeup(0, function() {
+                _locationCB(WIFI_SIGNALS_ERROR, null);
+                _locationCB = null;
+            }.bindenv(this))
+            return;
         }
 
         // Store wifi scan result to use if we need to retry request

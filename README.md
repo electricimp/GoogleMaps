@@ -10,7 +10,7 @@ See [Google's API documentation](https://developers.google.com/maps/web-services
 
 ## Device Class Usage
 
-The constructor is called automatically whe you require the library.
+To use just add this statement to the top of your device code. The constructor is called automatically when you require the library. 
 
 ```
 #require "GoogleMaps.device.lib.nut:1.0.0"
@@ -18,7 +18,9 @@ The constructor is called automatically whe you require the library.
 
 ### Constructor: GoogleMaps()
 
-The device-side library constructor takes no parameters.  It opens a listener for location requests from the agent. When a request is received, the device scans the WiFi networks and sends the result back to the agent. The constructor is called automatically whe you require the library.
+**Please Note:** The constructor is called automatically when you require the library. You do not need to call the constructor. 
+
+The device-side library constructor takes no parameters.  It opens a listener for location requests from the agent. When a request is received, the device scans the WiFi networks and sends the result back to the agent. 
 
 ## Agent Class Usage
 
@@ -37,7 +39,7 @@ gmaps <- GoogleMaps(API_KEY);
 
 ### getGeolocation(*callback*)
 
-This will request a wifi scan from the device by issuing a `device.send()` command. The device will respond with the wifi networks it can see and send them to the Google Maps geolocation API. This API will try to return a geolocation based on the wifi signals it can see. The results will be passed to the *callback* function. The *callback* function takes two parameters: error, if an error occured while processing the request otherwise null, and a results table with the response from the Google API. The results table will contain the following fields:
+This will request a wifi scan from the device by issuing a `device.send()` command. The device will respond with the wifi networks it can see and send them to the Google Maps geolocation API. This API will try to return a geolocation based on the wifi signals from the scan. The results will be passed to the *callback* function. The *callback* function takes two parameters: error, if an error occured while processing the request otherwise null, and a results table with the response from the Google API. The results table will contain the following fields:
 
 | Field        | Meaning                                                    |
 | ------------ | ---------------------------------------------------------- |
@@ -63,13 +65,13 @@ This method takes two required parameters: a *location* table with keys `lat` an
 | ------------ | ------------------------------------------------------------------------- |
 | status       | Status of the API query. Either OK or FAIL.                               |
 | timeZoneId   | The name of the time zone. Refer to time zone list.                       |
-| timeZoneName |  The long description of the time zone                                    |
-| gmtOffsetStr |  GMT Offset String such as GMT-7                                          |
-| rawOffset    |  The time zone's offset without DST changes                               |
-| dstOffset    |  The DST offset to be added to the rawOffset to get the current gmtOffset |
+| timeZoneName | The long description of the time zone                                     |
+| gmtOffsetStr | GMT Offset String such as GMT-7                                           |
+| rawOffset    | The time zone's offset without DST changes                                |
+| dstOffset    | The DST offset to be added to the rawOffset to get the current gmtOffset  |
 | gmtOffset    | The time offset in seconds based on UTC time.                             |
-| time         |  Current local time in Unix timestamp.                                    |
-| date         |  Squirrel date() object                                                   |
+| time         | Current local time in Unix timestamp.                                     |
+| date         | Squirrel date() object                                                    |
 | dateStr      | Date string formatted as YYYY-MM-DD HH-MM-SS                              |
 
 #### Example:
@@ -79,7 +81,7 @@ gmaps.getGeolocation(function(error, resp) {
         server.error(error);
    } else {
         gmaps.getTimezone(resp.location, function(err, res) {
-            if (err != null || res.status == "FAIL") {
+            if (err != null) {
                 server.error(err);
             } else {
                 server.log(res.timeZoneName);

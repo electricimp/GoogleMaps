@@ -32,7 +32,7 @@ class GoogleMaps {
     constructor() {
         agent.on(SCAN_REQUEST, function(d) {
             agent.send(WIFI_NETWORKS_RESPONSE, imp.scanwifinetworks())
-        });
+        }.bindenv(this));
     }
 }
 
