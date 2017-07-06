@@ -2,33 +2,17 @@
 
 The Google Maps library uses the Goolge Maps API to get geolocation and time zone information.
 
-Please note to use this library you must require and instantiate Google Maps on both the agent and the device.
-
-**To add this library to your project, add `#require "GoogleMaps.agent.lib.nut:1.0.0"` to the top of your agent code, and `#require "GoogleMaps.device.lib.nut:1.0.0"` to the top of your device code.**
+**To add this library to your project, add `#require "GoogleMaps.agent.lib.nut:1.0.0"` to the top of your agent code.**
 
 See [Google's API documentation](https://developers.google.com/maps/web-services/) for further information.
 
 [![Build Status](https://travis-ci.org/electricimp/GoogleMaps.svg?branch=master)](https://travis-ci.org/electricimp/GoogleMaps)
-
-## Device Class Usage
-
-To use just add this statement to the top of your device code. The constructor is called automatically when you require the library. 
-
-```
-#require "GoogleMaps.device.lib.nut:1.0.0"
-```
-
-### Constructor: GoogleMaps()
-
-**Please Note:** The constructor is called automatically when you require the library. You do not need to call the constructor. 
-
-The device-side library constructor takes no parameters.  It opens a listener for location requests from the agent. When a request is received, the device scans the WiFi networks and sends the result back to the agent. 
-
-## Agent Class Usage
+ 
+## Class Usage
 
 ### Constructor(*apiKey*)
 
-The agent-side library takes one parameter, your Google API key. Apply for an API key on the [Google Developer Console](https://console.developers.google.com/apis/credentials).
+The library takes one parameter, your Google API key. Apply for an API key on the [Google Developer Console](https://console.developers.google.com/apis/credentials).
 
 ```
 #require "GoogleMaps.agent.lib.nut:1.0.0"
@@ -39,9 +23,9 @@ gmaps <- GoogleMaps(API_KEY);
 
 ## Agent Class Methods
 
-### getGeolocation(*callback*)
+### getGeolocation(*wifis, callback*)
 
-This will request a wifi scan from the device by issuing a `device.send()` command. The device will respond with the wifi networks it can see and send them to the Google Maps geolocation API. This API will try to return a geolocation based on the wifi signals from the scan. The results will be passed to the *callback* function. The *callback* function takes two parameters: error, if an error occured while processing the request otherwise null, and a results table with the response from the Google API. The results table will contain the following fields:
+The *getGeolocation()* method will try to determine a geolocation based on the wifi signals from a device side wifi scan. The *wifis* parameter must be the results from the device side [imp.scanwifinetworks](https://electricimp.com/docs/api/imp/scanwifinetworks/) method. The *callback* parameter is a function that will be passed the results of the request to Google Maps API. The *callback* function takes two parameters: error, if an error occured while processing the request otherwise null, and a results table with the response from the Google API. The results table will contain the following fields:
 
 | Field        | Meaning                                                    |
 | ------------ | ---------------------------------------------------------- |
@@ -50,13 +34,24 @@ This will request a wifi scan from the device by issuing a `device.send()` comma
 
 #### Example:
 ```
-gmaps.getGeolocation(function(error, resp) {
-   if (error != null) {
-        server.error(error);
-   } else {
-        server.log(format("Location latitude: %f, longitude: %f with accuracy: %f", resp.location.lat, resp.location.lng, resp.accuracy));
-   }
-});
+// Device side code
+agent.send("wifi.networks", imp.scanwifinetworks());
+```
+
+```
+// Agent side code
+const API_KEY = "<YOUR API KEY HERE>";
+gmaps <- GoogleMaps(API_KEY);
+
+device.on("wifi.networks", function(wifis) {
+    gmaps.getGeolocation(wifis, function(error, resp) {
+        if (error != null) {
+            server.error(error);
+        } else {
+            server.log(format("Location latitude: %f, longitude: %f with accuracy: %f", resp.location.lat, resp.location.lng, resp.accuracy));
+        }
+    })
+})
 ```
 
 ### getTimezone(*location, callback*)
@@ -78,7 +73,7 @@ This method takes two required parameters: a *location* table with keys `lat` an
 
 #### Example:
 ```
-gmaps.getGeolocation(function(error, resp) {
+gmaps.getGeolocation(wifis, function(error, resp) {
    if (error != null) {
         server.error(error);
    } else {
