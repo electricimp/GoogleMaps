@@ -25,7 +25,7 @@ gmaps <- GoogleMaps(API_KEY);
 
 ### getGeolocation(*networks, callback*)
 
-The *getGeolocation()* method will try to determine the location of your device based on a device-side scan of nearby WiFi networks. The scan is made by an imp API [*imp.scanwifinetworks()*](https://electricimp.com/docs/api/imp/scanwifinetworks/) call, the results of which shoiuld be sent to the agent and passed into *getGeolocation()*’s *networks* parameter.
+The *getGeolocation()* method will try to determine the location of your device based on a device-side scan of nearby WiFi networks. The scan is made by an imp API [*imp.scanwifinetworks()*](https://electricimp.com/docs/api/imp/scanwifinetworks/) call, the results of which should be sent to the agent and passed into *getGeolocation()*’s *networks* parameter.
 
 The *callback* parameter is a function that will be called when Google returns location data or an error has occurred. The function takes two parameters: *error* and *results*. If an error occured while processing the request, *error* will contain a description of the error, otherwise it will be `null` and a table containing the results from Google will be passed into *results*. This table will contain the following keys:
 
@@ -59,7 +59,7 @@ device.on("wifi.networks", function(networks) {
 
 ### getTimezone(*location, callback*)
 
-This method takes two required parameters: a *location* table with keys *lat* and *lng*, and a *callback* function. It sends the location data to the Google Maps timezone API. The result is passed to the *callback* function, which takes two parameters: *error*, which will hold an error message if an error occured while processing the request, otherwise `null`, and *results*, which is table with the response from Google. The results table will contain the following keys:
+This method takes two required parameters: a *location* table with keys *lat* and *lng*, and a *callback* function. It sends the location data to the Google Maps timezone API. The result is passed to the *callback* function, which takes two parameters: *error*, which will hold an error message if an error occurred while processing the request, otherwise `null`, and *results*, which is table with the response from Google. The results table will contain the following keys:
 
 | Key          | Description                                                               |
 | ------------ | ------------------------------------------------------------------------- |
