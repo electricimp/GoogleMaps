@@ -21,9 +21,6 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 
-// Test must include both agent and device library files, however
-// BasicTestCase runs only on the agent.
-
 const GOOGLE_MAPS_API_KEY = "@{GOOGLE_MAPS_API_KEY}";
 
 class BasicTestCase extends ImpTestCase {
