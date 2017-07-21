@@ -21,12 +21,146 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 
-// Test must include both agent and device library files, however
-// BasicTestCase runs only on the agent.
-
-const GOOGLE_MAPS_API_KEY = "#{env:GOOGLE_MAPS_API_KEY}";
+const GOOGLE_MAPS_API_KEY = "@{GOOGLE_MAPS_API_KEY}";
 
 class BasicTestCase extends ImpTestCase {
+
+    // Results of a wifi scan
+    static wifis = [
+                    {
+                        "bssid": "0418d672c280",
+                        "channel": 11,
+                        "ssid": "Electric Imp Guest",
+                        "open": false,
+                        "rssi": -50
+                    },
+                    {
+                        "bssid": "0418d672c281",
+                        "channel": 11,
+                        "ssid": "",
+                        "open": false,
+                        "rssi": -49
+                    },
+                    {
+                        "bssid": "0418d61d9aa0",
+                        "channel": 11,
+                        "ssid": "Electric Imp Guest",
+                        "open": false,
+                        "rssi": -35
+                    },
+                    {
+                        "bssid": "1005b1230e00",
+                        "channel": 1,
+                        "ssid": "ATTP4RRCI2",
+                        "open": false,
+                        "rssi": -62
+                    },
+                    {
+                        "bssid": "be1544ab9a44",
+                        "channel": 11,
+                        "ssid": "PAU_5150_Bonjour",
+                        "open": false,
+                        "rssi": -50
+                    },
+                    {
+                        "bssid": "a61544ab9a44",
+                        "channel": 11,
+                        "ssid": "PAU_5150_Student",
+                        "open": true,
+                        "rssi": -51
+                    },
+                    {
+                        "bssid": "0418d61d9ee1",
+                        "channel": 11,
+                        "ssid": "impair",
+                        "open": false,
+                        "rssi": -50
+                    },
+                    {
+                        "bssid": "0418d61d9ee0",
+                        "channel": 11,
+                        "ssid": "Electric Imp Guest",
+                        "open": false,
+                        "rssi": -52
+                    },
+                    {
+                        "bssid": "0418d61d9ee2",
+                        "channel": 11,
+                        "ssid": "impervious",
+                        "open": false,
+                        "rssi": -51
+                    },
+                    {
+                        "bssid": "881544ab9a44",
+                        "channel": 11,
+                        "ssid": "PAU_5150_Desktops",
+                        "open": false,
+                        "rssi": -50
+                    },
+                    {
+                        "bssid": "ba1544ab9a44",
+                        "channel": 11,
+                        "ssid": "PAU_5150_Guest",
+                        "open": false,
+                        "rssi": -51
+                    },
+                    {
+                        "bssid": "861544ab9a44",
+                        "channel": 11,
+                        "ssid": "Gronowski-WIFI",
+                        "open": false,
+                        "rssi": -50
+                    },
+                    {
+                        "bssid": "c07cd1d72e23",
+                        "channel": 11,
+                        "ssid": "XFINITY",
+                        "open": false,
+                        "rssi": -81
+                    },
+                    {
+                        "bssid": "9ed36d9c1150",
+                        "channel": 8,
+                        "ssid": "AISense-Guest",
+                        "open": false,
+                        "rssi": -48
+                    },
+                    {
+                        "bssid": "9cd36d9c115f",
+                        "channel": 8,
+                        "ssid": "AISense-2.4-NG",
+                        "open": false,
+                        "rssi": -47
+                    },
+                    {
+                        "bssid": "0418d61d9aa2",
+                        "channel": 11,
+                        "ssid": "impervious",
+                        "open": false,
+                        "rssi": -41
+                    },
+                    {
+                        "bssid": "0418d672c282",
+                        "channel": 11,
+                        "ssid": "impair",
+                        "open": false,
+                        "rssi": -49
+                    },
+                    {
+                        "bssid": "0418d672c283",
+                        "channel": 11,
+                        "ssid": "impervious",
+                        "open": false,
+                        "rssi": -50
+                    },
+                    {
+                        "bssid": "14d64d35bd24",
+                        "channel": 11,
+                        "ssid": "dlink",
+                        "open": false,
+                        "rssi": -55
+                    }
+                ];
 
     // Initialize sensor
     function setUp() {
@@ -36,7 +170,7 @@ class BasicTestCase extends ImpTestCase {
     function testGetGeolocation() {
         local gmaps = GoogleMaps(GOOGLE_MAPS_API_KEY);
         return Promise(function(resolve, reject) {
-            gmaps.getGeolocation(function(err, res) {
+            gmaps.getGeolocation(wifis, function(err, res) {
                 if (err) {
                     reject("Get Geolocation error: " + err);
                 } else {
@@ -52,23 +186,9 @@ class BasicTestCase extends ImpTestCase {
     function testGetGeolocationBadKey() {
         local gmaps_bad_key = GoogleMaps("123");
         return Promise(function(resolve, reject) {
-            gmaps_bad_key.getGeolocation(function(err, res) {
+            gmaps_bad_key.getGeolocation(wifis, function(err, res) {
                 assertTrue(err != null, "Error not returned");
                 resolve("Bad key request failed as expected");
-            }.bindenv(this))
-        }.bindenv(this))
-    }
-
-    function testGetGeolocationDoubleRequest() {
-        local gmaps = GoogleMaps(GOOGLE_MAPS_API_KEY);
-        return Promise(function(resolve, reject) {
-            gmaps.getGeolocation(function(err, res) {
-                assertTrue(err == null, "Error in response");
-                assertTrue("location" in res, "Response missing location"); 
-                resolve("Double request test done");
-            }.bindenv(this))
-            gmaps.getGeolocation(function(err, res) {
-                assertTrue(err != null, "Error not returned");
             }.bindenv(this))
         }.bindenv(this))
     }
@@ -76,7 +196,7 @@ class BasicTestCase extends ImpTestCase {
     function testGetTimezone() {
         local gmaps = GoogleMaps(GOOGLE_MAPS_API_KEY);
         return Promise(function(resolve, reject) {
-            gmaps.getGeolocation(function(err, res) {
+            gmaps.getGeolocation(wifis, function(err, res) {
                 if (err) {
                     reject("Get Geolocation error: " + err);
                 } else {
