@@ -25,7 +25,7 @@ gmaps <- GoogleMaps(API_KEY);
 
 ### getGeolocation(*networks, callback*)
 
-The *getGeolocation()* method will try to determine the location of your device based on a device-side scan of nearby WiFi networks. The scan is made by an imp API [*imp.scanwifinetworks()*](https://electricimp.com/docs/api/imp/scanwifinetworks/) call, the results of which should be sent to the agent and passed into *getGeolocation()*’s *networks* parameter.
+The *getGeolocation()* method will try to determine the location of your device based on a device-side scan of nearby WiFi networks. The scan is made by an imp API [*imp.scanwifinetworks()*](https://developer.electricimp.com/api/imp/scanwifinetworks) call, the results of which should be sent to the agent and passed into *getGeolocation()*’s *networks* parameter.
 
 The *callback* parameter is a function that will be called when Google returns location data or an error has occurred. The function takes two parameters: *error* and *results*. If an error occured while processing the request, *error* will contain a description of the error, otherwise it will be `null` and a table containing the results from Google will be passed into *results*. This table will contain the following keys:
 
