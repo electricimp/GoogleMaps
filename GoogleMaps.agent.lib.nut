@@ -44,7 +44,7 @@ class GoogleMaps {
 
     function getGeolocation(wifis, cb) {
         if (wifis.len() < 2) {
-            imp.wakeup(0, function() { cb(WIFI_SIGNALS_ERROR, null); }.bindenv(this));
+            imp.wakeup(0, function() { cb(GOOGLE_MAPS_WIFI_SIGNALS_ERROR, null); }.bindenv(this));
             return;
         }
 
