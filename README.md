@@ -4,7 +4,7 @@ This library uses the Google Maps API to obtain geolocation and time zone inform
 
 To use the library, you will need a Google API key. You can apply for an API key on the [Google Developer Console](https://console.developers.google.com/apis/credentials).
 
-**To add this library to your project, add** `#require "GoogleMaps.agent.lib.nut:1.0.0"` **to the top of your agent code.**
+**To add this library to your project, add** `#require "GoogleMaps.agent.lib.nut:1.0.1"` **to the top of your agent code.**
 
 [![Build Status](https://travis-ci.org/electricimp/GoogleMaps.svg?branch=master)](https://travis-ci.org/electricimp/GoogleMaps)
  
@@ -15,7 +15,7 @@ To use the library, you will need a Google API key. You can apply for an API key
 The library takes one parameter, your Google API key.
 
 ```
-#require "GoogleMaps.agent.lib.nut:1.0.0"
+#require "GoogleMaps.agent.lib.nut:1.0.1"
 
 const API_KEY = "<YOUR API KEY HERE>";
 gmaps <- GoogleMaps(API_KEY);
