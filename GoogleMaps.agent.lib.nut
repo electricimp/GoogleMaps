@@ -31,7 +31,7 @@ const GOOGLE_MAPS_LOCATION_NOT_FOUND_ERROR  = "Your API request was valid, but n
 
 class GoogleMaps {
 
-    static VERSION = "1.0.0";
+    static VERSION = "1.0.1";
 
     static LOCATION_URL = "https://www.googleapis.com/geolocation/v1/geolocate?key=";
     static TIMEZONE_URL = "https://maps.googleapis.com/maps/api/timezone/json?";
@@ -44,7 +44,7 @@ class GoogleMaps {
 
     function getGeolocation(wifis, cb) {
         if (wifis.len() < 2) {
-            imp.wakeup(0, function() { cb(WIFI_SIGNALS_ERROR, null); }.bindenv(this));
+            imp.wakeup(0, function() { cb(GOOGLE_MAPS_WIFI_SIGNALS_ERROR, null); }.bindenv(this));
             return;
         }
 
