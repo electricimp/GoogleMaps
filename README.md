@@ -1,10 +1,12 @@
 # GoogleMaps
 
-This library uses the Google Maps API to obtain geolocation and time zone information based on a scan of WiFi networks around the device. Please see [Google’s API documentation](https://developers.google.com/maps/web-services/) for further information.
+This library uses the Google Maps API to obtain geolocation and time zone information based on a scan of WiFi networks and cell towers around the device. Please see [Google’s API documentation](https://developers.google.com/maps/web-services/) for further information.
 
 To use the library, you will need a Google API key. You can apply for an API key on the [Google Developer Console](https://console.developers.google.com/apis/credentials).
 
 **To add this library to your project, add** `#require "GoogleMaps.agent.lib.nut:1.1.0"` **to the top of your agent code.**
+
+Note, this version is backward compatible with the 1.0.x versions.
 
 ## Class Usage
 
@@ -23,41 +25,44 @@ gmaps <- GoogleMaps(API_KEY);
 
 ### getGeolocation(*data[, callback]*)
 
-This method will try to determine the location of your device based on a device-side scan of nearby WiFi networks or cell towers.
+This method tries to determine the location of your device based on a device-side scan of nearby WiFi networks and/or cell towers.
 
 #### Parameters
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *data* | Table or Array[*](#data-note) | Yes | A table containing useful data and parameters to make a [Geolocation request](https://developers.google.com/maps/documentation/geolocation/overview#requests) to the Google Maps API. [The description](#geolocation-data-parameter) is below. Or an array of scanned WiFi networks (see [the note below](#data-note)). |
-| *callback* | Function | No | A function that will be called when Google returns location data or an error has occurred. The function takes two parameters: *error* and *results*. If an error occured while processing the request, *error* will contain a description of the error, otherwise it will be `null` and [a table containing the results from Google](#geolocation-result-table) will be passed into *results*. |
+| *data* | Table or Array | Yes | Table with [Geolocation Request Parameters](#geolocation-request-parameters). For the backward compatibility with the 1.0.x versions of this library, it is allowed to directly pass the *wifiAccessPoints* array (array of WiFi networks - see [Geolocation Request Parameters](#geolocation-request-parameters)) without wrapping this array into a table. |
+| *callback* | Function | No | Function that will be called when the Google Maps API returns location or an error has occurred. The function takes two parameters: *error* (String with the error description) and *results* (Table [Geolocation Result](#geolocation-result)). If *error* is *null* (an error has occurred), then *results* should be ignored. If *error* is not *null* (no error has occurred), then *results* contains the location information. If the *callback* function is not specified or is *null*, then the result of the operation is returned via the [Promise}(#getgeolocation-returns). |
 
-#### Geolocation Data Parameter
+#### Geolocation Request Parameters
 
-All fields are optional. The main fields of this table are the following:
+Table with parameters for a [Geolocation request](https://developers.google.com/maps/documentation/geolocation/overview#requests) to the Google Maps API.
 
-| Key        | Description                                                |
-| ---------- | ---------------------------------------------------------- |
-| *wifiAccessPoints* | The result of a scan of WiFi networks made by an imp API [*imp.scanwifinetworks()*](https://developer.electricimp.com/api/imp/scanwifinetworks) call. **NOTE:** The data returned by this imp API is converted to the Google API's required format automatically by this library. |
-| *cellTowers* | An array of scanned cell towers. For the format, please, see [the docs](https://developers.google.com/maps/documentation/geolocation/overview#cell_tower_object). |
-| *radioType* | The mobile radio type. Makes sense only if scanned cell towers passed. |
+| Key        | Type | Description                                                |
+| ---------- | ---- | ---------------------------------------------------------- |
+| *wifiAccessPoints* | Array | Array with information about nearby WiFi networks. The format is equal to the format returned by the [*imp.scanwifinetworks()*](https://developer.electricimp.com/api/imp/scanwifinetworks) imp API method. This format is converted to the Geolocation request parameters by the GoogleMaps library itself. |
+| *cellTowers* | Array | Array with information about nearby cell towers. For the format - see the [Cell tower objects](https://developers.google.com/maps/documentation/geolocation/overview#cell_tower_object) section in the Geolocation request description. |
+| *radioType* | String | Mobile radio type. Makes sense if *cellTowers* is passed. See the [radioType](https://developers.google.com/maps/documentation/geolocation/overview#body) field in the Geolocation request body description. |
 
-The other possible fields and options for the *data* table can be checked out [here](https://developers.google.com/maps/documentation/geolocation/overview#body).
+- When you need to determine the location using WiFi networks - specify the *wifiAccessPoints* field. Alternatively, you can pass this array directly to the *getGeolocation()* method as the *data* parameter.
+- When you need to determine the location using cell towers - specify the *cellTowers* field and, optionally, the *radioType* field.
+- If you specify the both *wifiAccessPoints* and *cellTowers* fields, the Google Maps API will decide how to determine the location by itself.
 
-<a id='data-note'></a>
-**NOTE:** For the backward compatibility with v1.0.x, it's also allowed to pass the array returned by [*imp.scanwifinetworks()*](https://developer.electricimp.com/api/imp/scanwifinetworks) directly to [the *getGeolocation()* method](#getgeolocationdata-callback) without a wrapping table.
+There are more optional fields which can be additionally specified in the table and passed into the Geolocation request - see the [Geolocation request body description](https://developers.google.com/maps/documentation/geolocation/overview#body).
 
-#### Geolocation Result Table
+#### Geolocation Result
 
-| Key        | Description                                                |
-| ---------- | ---------------------------------------------------------- |
-| *location* | A table with keys *lat* and *lng*                          |
-| *accuracy* | The accuracy radius of the estimated location, in meters   |
+Table with the location if it is successfully determined.
 
-#### Returns
+| Key        | Type | Description                                                |
+| ---------- | ---- | ---------------------------------------------------------- |
+| *location* | Table | Estimated location - table with the fields: *lat* (Float - latitude, in degrees) and *lng* (Float - longitude, in degrees) |
+| *accuracy* | Float | Accuracy radius of the estimated location, in meters |
 
-If the *callback* parameter was not passed, an instance of [Promise](https://github.com/electricimp/Promise) will be returned. If an error occured while processing the request, this Promise will be rejected with a description of the error. Otherwise, this Promise will be resolved with [a table containing the results from Google](#geolocation-result-table).<br/>
-If a callback function was passed into the method, nothing will be returned.
+#### getGeolocation Returns
+
+- If the *callback* parameter was not specified or was *null*, an instance of [Promise](https://github.com/electricimp/Promise) is returned. If an error has occurred, this Promise is rejected with String - description of the error. Otherwise, this Promise is resolved with Table [Geolocation Result](#geolocation-result) - location information.
+- If the *callback* parameter was specified, nothing is returned.
 
 #### Example 1
 
@@ -117,16 +122,18 @@ device.on("geolocation.data", function(geolocationData) {
 
 ### getTimezone(*location[, callback]*)
 
-This method will obtain the timezone information for the location passed in.
+This method obtains the timezone information for the location passed in.
 
 #### Parameters
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *location* | Table | Yes | The location. A table containing keys *lat* and *lng*. |
-| *callback* | Function | No | A function that will be called when Google returns timezone data or an error has occurred. The function takes two parameters: *error* and *results*. If an error occured while processing the request, *error* will contain a description of the error, otherwise it will be `null` and [a table containing the results from Google](#timezone-result-table) will be passed into *results*. |
+| *location* | Table | Yes | Location - table with the fields: *lat* (Float - latitude, in degrees) and *lng* (Float - longitude, in degrees) |
+| *callback* | Function | No | Function that will be called when the Google Maps API returns timezone information or an error has occurred. The function takes two parameters: *error* (String with the error description) and *results* (Table [Timezone Result](#timezone-result)). If *error* is *null* (an error has occurred), then *results* should be ignored. If *error* is not *null* (no error has occurred), then *results* contains the timezone information. If the *callback* function is not specified or is *null*, then the result of the operation is returned via the [Promise}(#gettimezone-returns). |
 
-#### Timezone Result Table
+#### Timezone Result
+
+Table with the timezone information if it is successfully obtained.
 
 | Key          | Description                                                               |
 | ------------ | ------------------------------------------------------------------------- |
@@ -141,10 +148,10 @@ This method will obtain the timezone information for the location passed in.
 | *date*         | The request date as a Squirrel *date()* object                            |
 | *dateStr*      | The request date as a string in `YYYY-MM-DD HH-MM-SS` format             |
 
-#### Returns
+#### getTimezone Returns
 
-If the *callback* parameter was not passed, an instance of [Promise](https://github.com/electricimp/Promise) will be returned. If an error occured while processing the request, this Promise will be rejected with a description of the error. Otherwise, this Promise will be resolved with [a table containing the results from Google](#timezone-result-table).<br/>
-If a callback function was passed into the method, nothing will be returned.
+- If the *callback* parameter was not specified or was *null*, an instance of [Promise](https://github.com/electricimp/Promise) is returned. If an error has occurred, this Promise is rejected with String - description of the error. Otherwise, this Promise is resolved with Table [Timezone Result](#timezone-result) - timezone information.
+- If the *callback* parameter was specified, nothing is returned.
 
 #### Example 1
 
@@ -180,6 +187,6 @@ gmaps.getGeolocation(geolocationData)
 });
 ```
 
-## Licence
+## License
 
 The GoogleMaps library is licensed under the [MIT License](./LICENSE)
