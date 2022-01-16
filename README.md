@@ -32,7 +32,7 @@ This method tries to determine the location of your device based on a device-sid
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
 | *data* | Table or Array | Yes | Table with [Geolocation Request Parameters](#geolocation-request-parameters). For the backward compatibility with the 1.0.x versions of this library, it is allowed to directly pass the *wifiAccessPoints* array (array of WiFi networks - see [Geolocation Request Parameters](#geolocation-request-parameters)) without wrapping this array into a table. |
-| *callback* | Function | No | Function that will be called when the Google Maps API returns location or an error has occurred. The function takes two parameters: *error* (String with the error description) and *results* (Table [Geolocation Result](#geolocation-result)). If *error* is *null* (an error has occurred), then *results* should be ignored. If *error* is not *null* (no error has occurred), then *results* contains the location information. If the *callback* function is not specified or is *null*, then the result of the operation is returned via the [Promise](#getgeolocation-returns). |
+| *callback* | Function | No | Function that will be called when the Google Maps API returns location or an error has occurred. The function takes two parameters: *error* (String with the error description) and *results* (Table [Geolocation Result](#geolocation-result)). If *error* is not *null* (an error has occurred), then *results* should be ignored. If *error* is *null* (no error has occurred), then *results* contains the location information. If the *callback* function is not specified or is *null*, then the result of the operation is returned via the [Promise](#getgeolocation-returns). |
 
 #### Geolocation Request Parameters
 
@@ -129,7 +129,7 @@ This method obtains the timezone information for the location passed in.
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
 | *location* | Table | Yes | Location - table with the fields: *lat* (Float - latitude, in degrees) and *lng* (Float - longitude, in degrees) |
-| *callback* | Function | No | Function that will be called when the Google Maps API returns timezone information or an error has occurred. The function takes two parameters: *error* (String with the error description) and *results* (Table [Timezone Result](#timezone-result)). If *error* is *null* (an error has occurred), then *results* should be ignored. If *error* is not *null* (no error has occurred), then *results* contains the timezone information. If the *callback* function is not specified or is *null*, then the result of the operation is returned via the [Promise](#gettimezone-returns). |
+| *callback* | Function | No | Function that will be called when the Google Maps API returns timezone information or an error has occurred. The function takes two parameters: *error* (String with the error description) and *results* (Table [Timezone Result](#timezone-result)). If *error* is not *null* (an error has occurred), then *results* should be ignored. If *error* is *null* (no error has occurred), then *results* contains the timezone information. If the *callback* function is not specified or is *null*, then the result of the operation is returned via the [Promise](#gettimezone-returns). |
 
 #### Timezone Result
 
