@@ -1,4 +1,4 @@
-// Copyright 2017 Electric Imp
+// Copyright 2017-2021 Electric Imp
 //
 // SPDX-License-Identifier: MIT
 //
@@ -27,140 +27,52 @@ class BasicTestCase extends ImpTestCase {
 
     // Results of a wifi scan
     static wifis = [
-                    {
-                        "bssid": "0418d672c280",
-                        "channel": 11,
-                        "ssid": "Electric Imp Guest",
-                        "open": false,
-                        "rssi": -50
-                    },
-                    {
-                        "bssid": "0418d672c281",
-                        "channel": 11,
-                        "ssid": "",
-                        "open": false,
-                        "rssi": -49
-                    },
-                    {
-                        "bssid": "0418d61d9aa0",
-                        "channel": 11,
-                        "ssid": "Electric Imp Guest",
-                        "open": false,
-                        "rssi": -35
-                    },
-                    {
-                        "bssid": "1005b1230e00",
-                        "channel": 1,
-                        "ssid": "ATTP4RRCI2",
-                        "open": false,
-                        "rssi": -62
-                    },
-                    {
-                        "bssid": "be1544ab9a44",
-                        "channel": 11,
-                        "ssid": "PAU_5150_Bonjour",
-                        "open": false,
-                        "rssi": -50
-                    },
-                    {
-                        "bssid": "a61544ab9a44",
-                        "channel": 11,
-                        "ssid": "PAU_5150_Student",
-                        "open": true,
-                        "rssi": -51
-                    },
-                    {
-                        "bssid": "0418d61d9ee1",
-                        "channel": 11,
-                        "ssid": "impair",
-                        "open": false,
-                        "rssi": -50
-                    },
-                    {
-                        "bssid": "0418d61d9ee0",
-                        "channel": 11,
-                        "ssid": "Electric Imp Guest",
-                        "open": false,
-                        "rssi": -52
-                    },
-                    {
-                        "bssid": "0418d61d9ee2",
-                        "channel": 11,
-                        "ssid": "impervious",
-                        "open": false,
-                        "rssi": -51
-                    },
-                    {
-                        "bssid": "881544ab9a44",
-                        "channel": 11,
-                        "ssid": "PAU_5150_Desktops",
-                        "open": false,
-                        "rssi": -50
-                    },
-                    {
-                        "bssid": "ba1544ab9a44",
-                        "channel": 11,
-                        "ssid": "PAU_5150_Guest",
-                        "open": false,
-                        "rssi": -51
-                    },
-                    {
-                        "bssid": "861544ab9a44",
-                        "channel": 11,
-                        "ssid": "Gronowski-WIFI",
-                        "open": false,
-                        "rssi": -50
-                    },
-                    {
-                        "bssid": "c07cd1d72e23",
-                        "channel": 11,
-                        "ssid": "XFINITY",
-                        "open": false,
-                        "rssi": -81
-                    },
-                    {
-                        "bssid": "9ed36d9c1150",
-                        "channel": 8,
-                        "ssid": "AISense-Guest",
-                        "open": false,
-                        "rssi": -48
-                    },
-                    {
-                        "bssid": "9cd36d9c115f",
-                        "channel": 8,
-                        "ssid": "AISense-2.4-NG",
-                        "open": false,
-                        "rssi": -47
-                    },
-                    {
-                        "bssid": "0418d61d9aa2",
-                        "channel": 11,
-                        "ssid": "impervious",
-                        "open": false,
-                        "rssi": -41
-                    },
-                    {
-                        "bssid": "0418d672c282",
-                        "channel": 11,
-                        "ssid": "impair",
-                        "open": false,
-                        "rssi": -49
-                    },
-                    {
-                        "bssid": "0418d672c283",
-                        "channel": 11,
-                        "ssid": "impervious",
-                        "open": false,
-                        "rssi": -50
-                    },
-                    {
-                        "bssid": "14d64d35bd24",
-                        "channel": 11,
-                        "ssid": "dlink",
-                        "open": false,
-                        "rssi": -55
-                    }
-                ];
+        {
+            "bssid": "4448c1a6f3d0",
+            "channel": 11,
+            "ssid": "net1",
+            "open": false,
+            "rssi": -54
+        },
+        {
+            "bssid": "9c1c12b045f1",
+            "channel": 11,
+            "ssid": "net2",
+            "open": false,
+            "rssi": -43
+        },
+        {
+            "bssid": "20a6cd336cf4",
+            "channel": 8,
+            "ssid": "net3",
+            "open": false,
+            "rssi": -32
+        }
+    ];
+
+    static cellTowers = [
+        {
+          "cellId": 61291,
+          "mobileCountryCode": 310,
+          "mobileNetworkCode": 260,
+          "locationAreaCode": 83,
+          "signalStrength": -50
+        },
+        {
+          "cellId": 60391,
+          "mobileCountryCode": 310,
+          "mobileNetworkCode": 260,
+          "locationAreaCode": 83,
+          "signalStrength": -50
+        },
+        {
+          "cellId": 30332,
+          "mobileCountryCode": 310,
+          "mobileNetworkCode": 260,
+          "locationAreaCode": 83,
+          "signalStrength": -40
+        }
+    ];
 
     // Initialize sensor
     function setUp() {
@@ -168,19 +80,51 @@ class BasicTestCase extends ImpTestCase {
     }
 
     function testGetGeolocation() {
+        local data = {
+            "wifiAccessPoints": wifis,
+            "cellTowers": cellTowers,
+            "radioType": "gsm"
+        };
+
+        return _testGetGeolocation(data);
+    }
+
+    function testGetGeolocationOnlyWifi() {
+        local data = {
+            "wifiAccessPoints": wifis
+        };
+
+        return _testGetGeolocation(data);
+    }
+
+    function testGetGeolocationOnlyWifiArray() {
+        return _testGetGeolocation(wifis);
+    }
+
+    function testGetGeolocationOnlyCell() {
+        local data = {
+            "cellTowers": cellTowers,
+            "radioType": "gsm"
+        };
+
+        return _testGetGeolocation(data);
+    }
+
+    function testGetGeolocationNoCallback() {
         local gmaps = GoogleMaps(GOOGLE_MAPS_API_KEY);
-        return Promise(function(resolve, reject) {
-            gmaps.getGeolocation(wifis, function(err, res) {
-                if (err) {
-                    reject("Get Geolocation error: " + err);
-                } else {
-                    assertTrue("location" in res, "Response missing location");
-                    assertTrue("accuracy" in res, "Response missing accuracy");
-                    assertTrue("lat" in res.location && "lng" in res.location, "lat and lng not in location");
-                    resolve("Received geolocation from Google");
-                }
-            }.bindenv(this))
-        }.bindenv(this))
+
+        local data = {
+            "wifiAccessPoints": wifis,
+            "cellTowers": cellTowers,
+            "radioType": "gsm"
+        };
+
+        return gmaps.getGeolocation(data)
+        .then(function(res) {
+            assertTrue("location" in res, "Response missing location");
+            assertTrue("accuracy" in res, "Response missing accuracy");
+            assertTrue("lat" in res.location && "lng" in res.location, "lat and lng not in location");
+        }.bindenv(this));
     }
 
     function testGetGeolocationBadKey() {
@@ -201,7 +145,10 @@ class BasicTestCase extends ImpTestCase {
                     reject("Get Geolocation error: " + err);
                 } else {
                     gmaps.getTimezone(res.location, function(error, resp) {
-                        assertTrue(err == null, "Error in response");
+                        if (error != null) {
+                            return reject("Error in response of getTimezone(): " + error);
+                        }
+
                         assertTrue(resp.status == "OK", "Unexpected response");
                         assertTrue("timeZoneId" in resp, "Unexpected response");
                         assertTrue("timeZoneName" in resp, "Unexpected response");
@@ -219,8 +166,45 @@ class BasicTestCase extends ImpTestCase {
         }.bindenv(this))
     }
 
+    function testGetTimezoneNoCallback() {
+        local gmaps = GoogleMaps(GOOGLE_MAPS_API_KEY);
+
+        return gmaps.getGeolocation(wifis)
+        .then(function(res) {
+            return gmaps.getTimezone(res.location);
+        }.bindenv(this))
+        .then(function(res) {
+            assertTrue(res.status == "OK", "Unexpected response");
+            assertTrue("timeZoneId" in res, "Unexpected response");
+            assertTrue("timeZoneName" in res, "Unexpected response");
+            assertTrue("gmtOffsetStr" in res, "Unexpected response");
+            assertTrue("rawOffset" in res, "Unexpected response");
+            assertTrue("dstOffset" in res, "Unexpected response");
+            assertTrue("gmtOffset" in res, "Unexpected response");
+            assertTrue("time" in res, "Unexpected response");
+            assertTrue("date" in res, "Unexpected response");
+            assertTrue("dateStr" in res, "Unexpected response");
+        }.bindenv(this));
+    }
+
     function tearDown() {
         return "Test finished";
     }
 
+    function _testGetGeolocation(data) {
+        local gmaps = GoogleMaps(GOOGLE_MAPS_API_KEY);
+
+        return Promise(function(resolve, reject) {
+            gmaps.getGeolocation(data, function(err, res) {
+                if (err) {
+                    reject("Get Geolocation error: " + err);
+                } else {
+                    assertTrue("location" in res, "Response missing location");
+                    assertTrue("accuracy" in res, "Response missing accuracy");
+                    assertTrue("lat" in res.location && "lng" in res.location, "lat and lng not in location");
+                    resolve("Received geolocation from Google");
+                }
+            }.bindenv(this))
+        }.bindenv(this))
+    }
 }
