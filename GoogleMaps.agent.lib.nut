@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright 2017 Electric Imp
+// Copyright 2017-2021 Electric Imp
 //
 // SPDX-License-Identifier: MIT
 //
@@ -28,10 +28,11 @@ const GOOGLE_MAPS_UNEXPECTED_RESP_ERROR     = "Unexpected response from Google";
 const GOOGLE_MAPS_LIMIT_EXCEEDED_ERROR      = "You have exceeded your daily limit";
 const GOOGLE_MAPS_INVALID_KEY_ERROR         = "Your Google Maps Geolocation API key is not valid or the request body is not valid JSON";
 const GOOGLE_MAPS_LOCATION_NOT_FOUND_ERROR  = "Your API request was valid, but no results were returned";
+const GOOGLE_MAPS_NO_PROMISE_LIB_ERROR      = "If no callback passed, the Promise library is required";
 
 class GoogleMaps {
 
-    static VERSION = "1.0.1";
+    static VERSION = "1.1.0";
 
     static LOCATION_URL = "https://www.googleapis.com/geolocation/v1/geolocate?key=";
     static TIMEZONE_URL = "https://maps.googleapis.com/maps/api/timezone/json?";
@@ -42,43 +43,94 @@ class GoogleMaps {
         _apiKey = apiKey;
     }
 
-    function getGeolocation(wifis, cb) {
-        if (wifis.len() < 2) {
-            imp.wakeup(0, function() { cb(GOOGLE_MAPS_WIFI_SIGNALS_ERROR, null); }.bindenv(this));
-            return;
+    function getGeolocation(data, cb = null) {
+        // We assume that if data is an array, then it contains WiFi networks.
+        // NOTE: This is for the backward compatibility with v1.0.x
+        if (typeof data == "array") {
+            data = {
+                "wifiAccessPoints": data
+            };
+        }
+
+        local body = clone data;
+
+        if (!("considerIp" in body)) {
+            body.considerIp <- false;
+        }
+
+        if ("wifiAccessPoints" in data) {
+            if (!("cellTowers" in data) && data.wifiAccessPoints.len() < 2) {
+                if (cb) {
+                    imp.wakeup(0, @() cb(GOOGLE_MAPS_WIFI_SIGNALS_ERROR, null));
+                    return;
+                } else {
+                    return Promise.reject(GOOGLE_MAPS_WIFI_SIGNALS_ERROR);
+                }
+            }
+
+            local wifis = [];
+
+            foreach (wifi in data.wifiAccessPoints) {
+                wifis.append({
+                    "macAddress": _addColons(wifi.bssid),
+                    "signalStrength": wifi.rssi,
+                    "channel" : wifi.channel
+                });
+            }
+
+            body.wifiAccessPoints <- wifis;
         }
 
         // Build request
         local url = format("%s%s", LOCATION_URL, _apiKey);
         local headers = {"Content-Type" : "application/json"};
-        local body = { "wifiAccessPoints": [] };
-
-        foreach (network in wifis) {
-            body.wifiAccessPoints.append({ "macAddress": _addColons(network.bssid),
-                                           "signalStrength": network.rssi
-                                           "channel" : network.channel });
-        }
-
         local request = http.post(url, headers, http.jsonencode(body));
-        request.sendasync(function(res) {
-            _locationRespHandler(wifis, res, cb);
-        }.bindenv(this));
+
+        return _processRequest(request, _locationRespHandler, cb, data);
     }
 
-    function getTimezone(location, cb) {
+    function getTimezone(location, cb = null) {
+        // Make sure we have the parameters we need to make request
         if (!("lat" in location && "lng" in location)) {
-            // Make sure we have the parameters we need to make request
-            cb(GOOGLE_MAPS_MISSING_REQ_PARAMS_ERROR, null);
+            if (cb) {
+                cb(GOOGLE_MAPS_MISSING_REQ_PARAMS_ERROR, null);
+                return;
+            } else {
+                return Promise.reject(GOOGLE_MAPS_MISSING_REQ_PARAMS_ERROR);
+            }
         }
-        
+
         local url = format("%slocation=%f,%f&timestamp=%d&key=%s", TIMEZONE_URL, location.lat, location.lng, time(), _apiKey);
-        local req = http.get(url, {})
-        req.sendasync(function(res) {
-            _timezoneResHandler(res, cb);
+        local request = http.get(url, {});
+
+        return _processRequest(request, _timezoneRespHandler, cb);
+    }
+
+    // additionalData - an optional parameter which will be passed to respHandler once the response has been received
+    function _processRequest(request, respHandler, cb, additionalData = null) {
+        if (!cb) {
+            if (!("Promise" in getroottable())) {
+                throw GOOGLE_MAPS_NO_PROMISE_LIB_ERROR;
+            }
+
+            return Promise(function(resolve, reject) {
+                cb = function(err, resp) {
+                    err ? reject(err) : resolve(resp);
+                }.bindenv(this);
+
+                request.sendasync(function(res) {
+                    respHandler(res, cb, additionalData);
+                }.bindenv(this));
+            }.bindenv(this));
+        }
+
+        request.sendasync(function(res) {
+            respHandler(res, cb, additionalData);
         }.bindenv(this));
     }
 
-    function _timezoneResHandler(res, cb) {
+    // _ - unused parameter. Declared only for unification with the other response handler
+    function _timezoneRespHandler(res, cb, _ = null) {
         local body;
         local err = null;
 
@@ -86,6 +138,7 @@ class GoogleMaps {
             body = http.jsondecode(res.body);
         } catch(e) {
             imp.wakeup(0, function() { cb(e, res); }.bindenv(this));
+            return;
         }
 
         if ("status" in body) {
@@ -108,24 +161,25 @@ class GoogleMaps {
         } else {
             err = res.statuscode + ": " + GOOGLE_MAPS_UNEXPECTED_RESP_ERROR;
         }
-        
+
         // Pass err/response to callback
-        imp.wakeup(0, function() { 
+        imp.wakeup(0, function() {
             (err) ?  cb(err, res) : cb(err, body);
         }.bindenv(this));
     }
 
     // Process location HTTP response
-    function _locationRespHandler(wifis, res, cb) {
-        local body; 
+    function _locationRespHandler(res, cb, reqData) {
+        local body;
         local err = null;
 
         try {
             body = http.jsondecode(res.body);
         } catch(e) {
             imp.wakeup(0, function() { cb(e, res); }.bindenv(this));
+            return;
         }
-        
+
         local statuscode = res.statuscode;
         switch(statuscode) {
             case 200:
@@ -146,7 +200,7 @@ class GoogleMaps {
                 break;
             case 429:
                 // Too many requests try again in a second
-                imp.wakeup(1, function() { getLocation(wifis, cb); }.bindenv(this));
+                imp.wakeup(1, function() { getGeolocation(reqData, cb); }.bindenv(this));
                 return;
             default:
                 if ("message" in body) {
@@ -157,7 +211,7 @@ class GoogleMaps {
                     err = GOOGLE_MAPS_UNEXPECTED_RESP_ERROR;
                 }
         }
-        
+
         imp.wakeup(0, function() { cb(err, res); }.bindenv(this));
     }
 
